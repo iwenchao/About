@@ -21,6 +21,9 @@ AIDL使用简单的语法来声明接口，以及描述其方法以及方法的
     - in表示输入型参数（Server可以获取到Client传递过去的数据，但是不能对Client端的数据进行修改）
     - out表示输出型参数（Server获取不到Client传递过去的数据，但是能对返回给Client端的数据进行修改）
     - inout表示输入输出型参数（Server可以获取到Client传递过去的数据，也能对返回给Client端的数据进行修改）
+5. 序列化
+    - Serializeable
+    - Parcelable
 
 #### 开发步骤
 1. 先穿件对应的aidl包，然后创建aidl文件；如Book.aidl
@@ -72,3 +75,22 @@ AIDL使用简单的语法来声明接口，以及描述其方法以及方法的
         ```
     - 在客户端调用service端接口时，出现错误提示
         - These exceptions do indeed get thrown and you should write appropriate try/catch logic to handle the situation where a remote method you invoked on a service did not complete.
+
+
+#### 补充1：死亡代理
+我们知道，Binder运行在服务端进程，如果服务端进程由于某些原因异常终止，这个时候客户端到服务端的Binder链接中断，则导致之后的远程调用失败，甚至我们不知道什么时候中断的。那么Binder提供了 linkToDeath 和 unlinkToDeath两个方法。当Binder连接断开是，我们就会收到通知。那么如何使用呢？
+```
+    IBinder.DeathRecipient mDeathRecipient = new IBinder.Recipient(){
+        //
+        @Override
+        public void binderDied(){
+            //先移除旧的binder代理，再重新绑定
+            mLocalService.asBinder().unlinkToDeath(mDeathRecipient,0);
+            mLocalService = null;
+            //重新绑定
+
+        }
+    }
+```
+
+#### 补充2：AIDL的权限验证
