@@ -60,7 +60,7 @@
 
 ### String与StringBuilder,StringBuffer的区别
 1. String: 只读,不可变; 在拼接String的时候,使用+编译器会帮我们进行优化
-2. StringBuilder: 可变,线程不安全,效率高
+2. StringBuilder: 可变,线程不安全,效率高 因为它的所有方面都没有被synchronized修饰 是JDK1.5引入的
 3. StringBuffer: 可变,线程安全,效率低
 ```
         String s1 = "Programming";
@@ -132,5 +132,61 @@ Reader类是 Java 的 I/O 中读字符的父类，而 InputStream 类是读字�
 1. 优点: 动态代理与静态代理相比较，最大的好处是接口中声明的所有方法都被转移到调用处理器一个集中的方法中处理（InvocationHandler.invoke）。这样，在接口方法数量比较多的时候，我们可以进行灵活处理，而不需要像静态代理那样每一个方法进行中转。
 2. 缺点: 它始终无法摆脱仅支持 interface 代理的桎梏，因为它的设计注定了这个遗憾。
 
+### Object有哪些公用方法？
+    1. clone方法
+    保护方法，实现对象的浅复制，只有实现了Cloneable接口才可以调用该方法，否则抛出CloneNotSupportedException异常。
+    主要是JAVA里除了8种基本类型传参数是值传递，其他的类对象传参数都是引用传递，我们有时候不希望在方法里将参数改变，这是就需要在类中复写clone方法。
 
+    2. getClass方法
+    final方法，获得运行时类型。
 
+    3．toString方法
+
+    该方法用得比较多，一般子类都有覆盖。
+
+    4．finalize方法
+
+    该方法用于释放资源。因为无法确定该方法什么时候被调用，很少使用。
+
+    5．equals方法
+
+    该方法是非常重要的一个方法。一般equals和==是不一样的，但是在Object中两者是一样的。子类一般都要重写这个方法。
+
+    6．hashCode方法
+
+    该方法用于哈希查找，可以减少在查找中使用equals的次数，重写了equals方法一般都要重写hashCode方法。这个方法在一些具有哈希功能的Collection中用到。
+
+    一般必须满足obj1.equals(obj2)==true。可以推出obj1.hash- Code()==obj2.hashCode()，但是hashCode相等不一定就满足equals。不过为了提高效率，应该尽量使上面两个条件接近等价。
+
+    如果不重写hashcode(),在HashSet中添加两个equals的对象，会将两个对象都加入进去。
+
+    7．wait方法
+
+    wait方法就是使当前线程等待该对象的锁，当前线程必须是该对象的拥有者，也就是具有该对象的锁。wait()方法一直等待，直到获得锁或者被中断。wait(long timeout)设定一个超时间隔，如果在规定时间内没有获得锁就返回。
+
+    调用该方法后当前线程进入睡眠状态，直到以下事件发生。
+
+    （1）其他线程调用了该对象的notify方法。
+
+    （2）其他线程调用了该对象的notifyAll方法。
+
+    （3）其他线程调用了interrupt中断该线程。
+
+    （4）时间间隔到了。
+
+    此时该线程就可以被调度了，如果是被中断的话就抛出一个InterruptedException异常。
+
+    8．notify方法
+
+    该方法唤醒在该对象上等待的某个线程。
+
+    9．notifyAll方法
+
+    该方法唤醒在该对象上等待的所有线程。
+
+### hashCode的理解
+    以Java.lang.Object来理解,JVM每new一个Object,它都会将这个Object丢到一个Hash哈希表中去,这样的话,下次做Object的比较或者取这个对象的时候,它会根据对象的hashcode再从Hash表中取这个对象。这样做的目的是提高取对象的效率。具体过程是这样:
+
+    new Object(),JVM根据这个对象的Hashcode值,放入到对应的Hash表对应的Key上,如果不同的对象确产生了相同的hash值,也就是发生了Hash key相同导致冲突的情况,那么就在这个Hash key的地方产生一个链表,将所有产生相同hashcode的对象放到这个单链表上去,串在一起。
+
+    比较两个对象的时候,首先根据他们的hashcode去hash表中找他的对象,当两个对象的hashcode相同,那么就是说他们这两个对象放在Hash表中的同一个key上,那么他们一定在这个key上的链表上。那么此时就只能根据Object的equal方法来比较这个对象是否equal。当两个对象的hashcode不同的话，肯定他们不能equal.
