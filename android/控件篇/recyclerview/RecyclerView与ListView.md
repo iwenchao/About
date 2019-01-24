@@ -91,4 +91,4 @@
     3. android L引入的嵌套滚动机制之后的对比
         - Android 触摸事件分发机制中，Touch 事件在进行分发的时候，由父 View 向它的子 View 传递，一旦某个子 View 开始接收进行处理，那么接下来所有事件都将由这个 View 来进行处理，它的 ViewGroup 将不会再接收到这些事件，直到下一次手指按下。而嵌套滚动机制（NestedScrolling）就是为了弥补这一机制的不足，为了让子 View 能和父 View 同时处理一个 Touch 事件。
         - 关于嵌套滚动机制（NestedScrolling），实现上相对是比较复杂的，此处就不去拓展说明，其关键在于NestedScrollingChild 和 NestedScrollingParent 两个接口，以及系统对这两个接口的实现类 NestedScrollingChildHelper 和 NestedScrollingParentHelper 
-        - CollapsingToolbarLayout/AppBarLayout 结合RecyclerView，NestedScrollView可以实现；ListView，ScrollView没有嵌套滚动的实现
+        - CollapsingToolbarLayout/AppBarLayout 结合RecyclerView，NestedScrollView可以实现；ListView，ScrollView没有嵌套滚动的实现   我们为ToolBar的app:layout_collapseMode设置为pin，表示折叠之后固定在顶端，而为ImageView的app:layout_collapseMode设置为parallax，表示视差模式，即渐变的效果。为了让RecyclerView支持嵌套滑动，还需要为它设置app:layout_behavior="@string/appbar_scrolling_view_behavior"。为CollapsingToolbarLayout设置app:layout_scrollFlags="scroll|exitUntilCollapsed"，其中scroll表示滚动出屏幕，exitUntilCollapsed表示退出后折叠。
