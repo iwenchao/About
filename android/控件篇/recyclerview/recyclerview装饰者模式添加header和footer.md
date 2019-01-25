@@ -1,0 +1,1 @@
+### recyclerview装饰者模式添加header和footer 以及适配多种LayoutManager
