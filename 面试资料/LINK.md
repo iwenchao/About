@@ -1,0 +1,2 @@
+1. [最全最完善的 Android 文章集，赌一包小鱼干不看绝对后悔https://github.com/Omooo/Android-Notes](https://github.com/Omooo/Android-Notes)
+2. [Android(2017-2018)BAT面试题整理（Java篇，含答案）https://blog.csdn.net/huangqili1314/article/details/79448187](https://blog.csdn.net/huangqili1314/article/details/79448187)
