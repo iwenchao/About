@@ -38,3 +38,12 @@ date:
     4. 高频写操作的 key 与高频读操作的 key 可以适当的拆分文件，以减少同步锁竞争
     5. 不要连续多次 edit，每次 edit 就是打开一次文件，应该获取一次 edit，然后多次执行 putXxx，减少内存波动，所以在封装方法的时候要注意了
 
+
+
+#### SharedPreferences支持进程同步吗?怎么让它支持
+- SharedPreferences不支持进程同步
+- MODE_MULTI_PROCESS的作用是什么?
+    - 在getSharedPreferences的时候, 会强制让SP进行一次读取操作，从而保证数据是最新的. 但是若频繁多进程进行读写 . 若某个进程持有了一个外部sp对象, 那么不能保证数据是最新的. 因为刚刚被别的进程更新了.
+- 考虑用ContentProvider来实现SharedPreferences的进程同步.
+    - ContentProvider基于Binder，不存在进程间互斥问题，对于同步，也做了很好的封装，不需要开发者额外实现。 
+    - 另外ContentProvider的每次操作都会重新getSP. 保证了sp的一致性.
