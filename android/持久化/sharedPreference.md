@@ -12,7 +12,7 @@ date:
 3. 核心原理以及源码分析
     - 基于 XML 文件存储的 key-value 键值对数据，在 ``` /data/data/<package name>/shared_prefs ``` 目录下。
     - SharedPreferences 本身只能获取数据而不支持存储和修改，存储修改是通过 SharedPreferences.Editor 来实现的，它们两个都只是接口，真正的实现在 SharedPreferencesImpl 和 EditorImpl 。
-    - ContentImpl.class对象，一个进程只存在一个该对象实例，里面的静态变量ArrayMap<String, ArrayMap<File, SharedPreferencesImpl>> sSharedPrefsCache保存了同一个进程内的所有 SharedPreferences 都保存在这个静态列表中
+    - ContextImpl.class对象，一个进程只存在一个该对象实例，里面的静态变量ArrayMap<String, ArrayMap<File, SharedPreferencesImpl>> sSharedPrefsCache保存了同一个进程内的所有 SharedPreferences 都保存在这个静态列表中
     - 可以稍微总结一下，sSharedPrefsCache 会保存加载到内存中的 SharedPreferences 对象，当用户需要获取 SP 对象的时候，首先会在 sSharedPrefsCache 中查找，如果没找到，就创建一个新的 SP 对象添加到 sSharedPrefsCache 中，并且以当前应用的包名为 key。
     - 需要注意的是，ContextImpl 类中并没有定义将 SharedPreferences 对象移除 sSharedPrefsCache 的方法，所以一旦加载到内存中，就会存在直至进程销毁。相对的，也就是说，SP 对象一旦加载到内存，后面任何时间使用，都是从内存中获取，不会再出现读取磁盘的情况。
     - 原来是根据传入的 file 从 ArrayMap<File, SharedPreferencesImpl> 拿到 SharedPreferences（SharedPreferencesImpl） 实例。关键代码其实并不多，但是我还是把所有代码都贴上了，因为这里我们能看到一个兼容性问题以及多进程问题，兼容性问题是指如果在 Android O 及更高版本中，通过传入的 file 拿到的 SharedPreferences 实例为空，说明该文件目录是用户无权限访问的，会直接抛出一个异常。多进程问题是指在 Context.MODE_MULTI_PROCESS 下，可能存在记录丢失的情况。
