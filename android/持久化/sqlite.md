@@ -56,3 +56,11 @@
         - 少用Cursor.getColumnIndex
         - 异步线程
 
+6. 数据库升级
+- 当我们SQLiteOpenHelper创建对象db的时候如果传入的版本号大于之前的版本号，该方法就会被调用，通过判断oldVersion 和 newVersion 就可以决定如何升级数据库。在这个函数中把老版本数据库的相应表中增加字段，并给每条记录增加默认值即可。新版本号和老版本号都会作为onUpgrade函数的参数传进来，便于开发者知道数据库应该从哪个版本升级到哪个版本。升级完成后，数据库会自动存储最新的版本号为当前数据库版本号。
+- SQLite提供了ALTER TABLE命令，允许用户重命名或添加新的字段到已有表中，但是不能从表中删除字段。并且只能在表的末尾添加字段
+7. 数据库迁移
+    1. 将表名改成临时表 ALTER TABLE Order RENAME TO _Order;
+    2. 创建新表 CREATETABLE Test(Id VARCHAR(32) PRIMARY KEY ,CustomName VARCHAR(32) NOTNULL , Country VARCHAR(16) NOTNULL);
+    3. 导入数据 INSERTINTO Order SELECT id, “”, Age FROM _Order;
+    4. 删除临时表 DROPTABLE _Order;
