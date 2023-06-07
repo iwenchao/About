@@ -37,15 +37,15 @@ String 在表示因为字符或者数字时，会可能存在浪费空间的情�
 
 3. public native String intern();
     - 对象内存分配
-        - String str = "Omooo":这样创建字符串对象，首先会去常量池中找有没有这个字符串，如果有就直接指向，没有就先往常量池中添加再指向。即 栈内变量指针直接指向常量池地址
-        - String str = new String("Omooo");首先在堆上创建该字符串对象，然后去看常量池中是否有该字符串，如果有就算了，没有就往常量池中添加一个。即 栈内变量指针指向堆内存的对象地址
+        - String str = "Omooo":这样创建字符串对象，首先会去常量池中找有没有这个字符串，如果有就直接指向，没有就先往常量池中添加再指向。即 **栈内变量指针直接指向常量池地址**
+        - String str = new String("Omooo");**首先在内存堆上创建该字符串对象**，然后去看常量池中是否有该字符串，如果有就算了，没有就往常量池中添加一个。即 栈内变量指针指向堆内存的对象地址
     - ```
         String str1 = new String("str")+new String("01");
         str1.intern();
         String str2 = "str01";
         System.out.println(str2==str1);
 
-        输出 true。
+        输出 false。
 
         分析：首先new String("str")会在堆中创建str，同时添加到常量池；new String("01")也是一样的，在堆中创建01，同时添加到常量池；然后两者拼接，底层用的append方法，在堆中生成一个str01；然后str1.intern()，就把str01拷贝到常量池了；此时运行到String str2 = "str01"，发现常量池中有了，所以直接指向常量池中的str01。最终str1指向堆中的str01对象，str2指向常量池的str01对象，所以结果是false。
 
