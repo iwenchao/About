@@ -156,3 +156,202 @@
 Toast中TN类使用Handler是为了用队列和时间控制排队显示Toast，所以为了防止在创建TN时抛出异常，需要在子线程中使用Looper.prepare();和Looper.loop();（但是不建议这么做，因为它会使线程无法执行结束，导致内存泄露）
 
 
+### handler发送延迟消息，一定会准确吗
+- 是否清楚UI时间相关的任务，如动画的设计实现原理；
+- 是否对Looper的消息机制有深刻的理解；
+- 是否做过UI过度绘制和其他消息机制的优化；
+
+答：不可靠。当主线程的消息过多，处理时间过长，出现消息拥挤堆积现象。postDelay(runable,time).  在messageQueue消息队列中的处理 ：enquequeMessage(),next()
+
+
+### 主线程looper为什么不会导致应用ANR
+- 是否了解ANR的产生条件
+- 是否对Android app的进程运行机制有深入了解；
+- 是否对Looper的消息机制有深刻理解；
+- 是否对IO多路复用有一定的认识；
+
+1. 主线程looper为什么不会ANR：
+    - ANR是怎么产生的？
+        - Service：前台20s，后台200s，超时则会ANR；
+        - BrocastReceiver：前台10s，后台广播60s；超时则会ANR；
+        - contentProvider：10s，超时则会ANR；
+        - 输入事件InputDispatch：5s：超时则会ANR；
+        - 在AMS中启动或者创建四大组件的时候，会同时进行埋个定时消息，如果在规定的时间内没有处理到，则会视为超时。那么就会抛出ANR异常；
+    - Looper的工作机制
+    - Looper不会导致应用ANR的本质原因是什么？
+    - Looper为什么不会导致CPU占用率高？
+        - 当消息队列没有消息的时候，会调用native层的epollWait方法，使得当前线程阻塞。epollwait会等待，直到用户态有新的消息进来，内核态的拿到新的消息后会再次通知epollwait返回消息，交给用户应用层处理。
+
+
+### 实现一个简单的handler-looper-Messagequeue
+
+class Message(val data);
+
+
+class MessageQueue{
+    val queue = LinkedList()
+
+    fun sycronizid enqueueMessage(msg:Message){
+        queue.offer(msg)
+        notify()
+    }
+
+    fun synchronized Message dequeueMessage(){
+        while(queue.isEmpty()){
+            wait()
+        }
+        return queue.poll()
+    }
+}
+
+class Looper(val mq:MessageQueue){
+
+    fun loop(){
+        while(true){
+            val msg = mq.dequeueMessage()
+            handleMessage(msg)
+        }
+    }
+
+
+    fun handleMessage(msg:Message){
+        //处理消息
+    }
+
+}
+
+
+class Hanlder(val mq:MessageQueue){
+
+    fun sendMessage(msg:Message){
+        mq.enqueueMessage(msg)
+    }
+}
+
+
+public class HandlerLooperMessageQueueExample {
+    public static void main(String[] args) {
+        MessageQueue messageQueue = new MessageQueue();
+        Looper looper = new Looper(messageQueue);
+        Handler handler = new Handler(messageQueue);
+
+        // 创建并启动处理消息的线程
+        Thread thread = new Thread(() -> {
+            looper.loop();
+        });
+        thread.start();
+
+        // 发送消息到消息队列
+        handler.sendMessage(new Message("Hello"));
+        handler.sendMessage(new Message("World"));
+    }
+}
+
+---------
+
+import java.util.concurrent.Delayed;
+import java.util.concurrent.DelayQueue;
+import java.util.concurrent.TimeUnit;
+
+class Message implements Delayed {
+    private String data;
+    private long delayMillis; // 延迟时间，单位毫秒
+    private long enqueueTime; // 消息入队时间
+
+    public Message(String data, long delayMillis) {
+        this.data = data;
+        this.delayMillis = delayMillis;
+        this.enqueueTime = System.currentTimeMillis();
+    }
+
+    public String getData() {
+        return data;
+    }
+
+    public long getDelayMillis() {
+        return delayMillis;
+    }
+
+    public long getEnqueueTime() {
+        return enqueueTime;
+    }
+
+    @Override
+    public long getDelay(TimeUnit unit) {
+        long currentTime = System.currentTimeMillis();
+        long delay = enqueueTime + delayMillis - currentTime;
+        return unit.convert(delay, TimeUnit.MILLISECONDS);
+    }
+
+    @Override
+    public int compareTo(Delayed other) {
+        long diff = getDelay(TimeUnit.MILLISECONDS) - other.getDelay(TimeUnit.MILLISECONDS);
+        return Long.compare(diff, 0);
+    }
+}
+
+class MessageQueue {
+    private DelayQueue<Message> queue = new DelayQueue<>();
+
+    public void enqueueMessage(Message message) {
+        queue.offer(message);
+    }
+
+    public Message dequeueMessage() throws InterruptedException {
+        return queue.take();
+    }
+}
+
+class Looper {
+    private MessageQueue messageQueue;
+
+    public Looper(MessageQueue messageQueue) {
+        this.messageQueue = messageQueue;
+    }
+
+    public void loop() {
+        try {
+            while (true) {
+                Message message = messageQueue.dequeueMessage();
+                handleMessage(message);
+            }
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void handleMessage(Message message) {
+        // 处理消息的逻辑
+        System.out.println("Received message: " + message.getData());
+    }
+}
+
+class Handler {
+    private MessageQueue messageQueue;
+
+    public Handler(MessageQueue messageQueue) {
+        this.messageQueue = messageQueue;
+    }
+
+    public void sendMessage(Message message) {
+        messageQueue.enqueueMessage(message);
+    }
+}
+
+public class HandlerLooperMessageQueueExample {
+    public static void main(String[] args) {
+        MessageQueue messageQueue = new MessageQueue();
+        Looper looper = new Looper(messageQueue);
+        Handler handler = new Handler(messageQueue);
+
+        // 创建并启动处理消息的线程
+        Thread thread = new Thread(() -> {
+            looper.loop();
+        });
+        thread.start();
+
+        // 发送延迟消息到消息队列
+        handler.sendMessage(new Message("Hello", 2000)); // 延迟2秒
+        handler.sendMessage(new Message("World", 5000)); // 延迟5秒
+    }
+}
